@@ -1,0 +1,184 @@
+on:
+  pull_request:
+  push:
+    branches: [ main, master, 'main-*', 'master-*', rc, 'rc-*' ]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+.*"
+  merge_group:
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+name: Build OSX
+jobs:
+  build:
+    runs-on: [self-hosted, macOS, p1sp]
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.getversion.outputs.version }}
+    env:
+      DEFAULT_HOST: "keymaster.sec.cloud-support.purestorage.com"
+      CI_PROD: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: "1.22.x"
+
+    - uses: actions/checkout@v4
+
+    - name: Disable git safe directory warnings
+      run: git config --global --add safe.directory '*'
+
+    - run: env GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 make client-test build-client
+
+    - name: Extract version number
+      id: getversion
+      run: |
+        VERSION=$(awk '/^Version:/{print $2}' keymaster.spec | sed 's/-/_/')  
+        VERSION_WITH_TYPE=$VERSION"${{ github.ref == 'refs/heads/main' && '' || '-SNAPSHOT' }}"
+        echo "VERSION=$VERSION_WITH_TYPE" >> $GITHUB_ENV
+        echo "version=$VERSION_WITH_TYPE" >> $GITHUB_OUTPUT
+
+    - name: Create pkg installer
+      run: |
+        mkdir -p package
+        cp bin/keymaster package
+        pkgbuild \
+          --root package \
+          --identifier "${{ vars.APPLE_BUNDLE_ID }}" \
+          --version "$VERSION" \
+          --install-location /usr/local/bin \
+          keymaster-unsigned.pkg
+        cp keymaster-unsigned.pkg keymaster.pkg
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: keymaster-osx
+        path: bin/keymaster
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: keymaster.pkg
+        path: keymaster.pkg
+
+  sign:
+    runs-on: [ self-hosted, macOS, p1sp ]
+    needs:
+      - build
+    environment: production
+    if: github.ref == 'refs/heads/main'  # Only sign on the main branch
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import Apple Certificate
+        if: github.ref == 'refs/heads/main'  # Only sign on the main branch
+        run: |
+          date; pwd; id
+          curl -o /tmp/apple_intermediate.cer ${{ vars.APPLE_ID_INTERMEDIATE_CERT_URL }}
+          echo "${{ secrets.APPLE_DEV_P12_BASE64 }}" | base64 --decode > /tmp/certificate.p12
+          echo "${{ secrets.APPLE_INS_P12_BASE64 }}" | base64 --decode > /tmp/ins-certificate.p12
+          shasum -a256 /tmp/certificate.p12 /tmp/ins-certificate.p12 /tmp/apple_intermediate.cer
+
+          security delete-keychain build.keychain || true
+          security create-keychain -p "" build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security list-keychains -d user -s build.keychain
+          ls -las ~/Library/Keychains
+
+          security import /tmp/apple_intermediate.cer -k build.keychain
+          security import /tmp/certificate.p12 -k build.keychain -P "${{ secrets.APPLE_DEV_PASSWORD }}" -T "/usr/bin/codesign"
+          security import /tmp/ins-certificate.p12 -k build.keychain -P "${{ secrets.APPLE_INS_PASSWORD }}" -T "/usr/bin/codesign" -T /usr/bin/productsign
+          security set-key-partition-list -S apple-tool:,apple:,codesign:,productsign: -s -k "" build.keychain
+
+          security find-certificate -a -Z build.keychain
+          security find-certificate -a -p build.keychain > allcerts.pem
+          (openssl crl2pkcs7 -nocrl -certfile allcerts.pem | openssl pkcs7 -print_certs -noout) || true
+
+          security find-certificate -c "${{ vars.APPLE_DEV_IDENTITY }}" -p build.keychain > mycert.pem
+          openssl x509 -in mycert.pem -text -noout
+          security verify-cert -v -k build.keychain -c mycert.pem || true
+          security verify-cert -v -k build.keychain -c mycert.pem -p codeSign || true
+
+          security find-identity -p codesigning build.keychain
+          echo "Valid system identities"
+          security find-identity
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: false
+
+      - name: Postprocess artifacts
+        run: |
+          ls -lasR artifacts/ || true
+          cp artifacts/keymaster-osx/keymaster keymaster 
+
+      - name: Sign the application
+        if: github.ref == 'refs/heads/main'  # Only sign on the main branch
+        run: |
+          codesign --sign "${{ vars.APPLE_DEV_IDENTITY }}" --keychain build.keychain --timestamp --options runtime --verbose=4 keymaster
+
+      - name: Create pkg installer
+        run: |
+          mkdir -p package
+          cp keymaster package
+          pkgbuild \
+            --root package \
+            --identifier "${{ vars.APPLE_BUNDLE_ID }}" \
+            --version "${{ needs.build.outputs.version }}" \
+            --install-location /usr/local/bin \
+            keymaster-unsigned.pkg
+
+      - name: Sign the installer
+        run: |
+          /bin/rm keymaster.pkg || true
+          productsign --keychain build.keychain --timestamp --sign "${{ vars.APPLE_INS_IDENTITY }}" keymaster-unsigned.pkg keymaster.pkg || true
+
+      - name: Notarize the application
+        run: |
+          xcrun notarytool submit --apple-id "${{ vars.APPLE_ID }}" --team-id "${{ vars.APPLE_TEAM_ID }}" --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" --wait --progress keymaster.pkg
+          xcrun stapler staple -v keymaster.pkg || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keymaster-osx
+          path: keymaster
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keymaster.pkg
+          path: keymaster.pkg
+          overwrite: true
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
+          /bin/rm /tmp/certificate.p12 /tmp/ins-certificate.p12 /tmp/apple_intermediate.cer || true
+
+  publish-sandbox:
+    needs:
+      - build
+    uses: ./.github/workflows/_publish.yml
+    if: github.ref != 'refs/heads/main'  # Only sign on the main branch
+    with:
+      official: false
+      target: 'osx'
+
+  publish-official:
+    needs:
+      - sign
+    if: github.ref == 'refs/heads/main'  # Only sign on the main branch
+    uses: ./.github/workflows/_publish.yml
+    with:
+      official: true
+      target: 'osx'

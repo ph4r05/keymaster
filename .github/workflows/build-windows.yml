@@ -1,0 +1,48 @@
+on:
+  pull_request:
+  push:
+    branches: [ main, master, 'main-*', 'master-*', rc, 'rc-*' ]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+.*"
+  merge_group:
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+name: Build Windows
+jobs:
+  build:
+    runs-on: [self-hosted, Windows]
+    permissions:
+      contents: read
+      actions: read
+    env:
+      DEFAULT_HOST: "keymaster.sec.cloud-support.purestorage.com"
+    steps:
+    - uses: actions/setup-go@v5
+      if: false  # preinstalled go is used atm.
+      with:
+        go-version: "1.22.x"
+
+    - uses: actions/checkout@v4
+
+    - name: Disable git safe directory warnings
+      run: git config --global --add safe.directory '*'
+
+    - run: |
+        & 'C:\git-sdk-64\msys2_shell.cmd' -mingw64 -no-start -here -defterm -c 'make client-test build-client'
+      shell: powershell
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: keymaster-windows
+        path: bin/keymaster.exe
+
+  publish:
+    needs:
+      - build
+    uses: ./.github/workflows/_publish.yml
+    with:
+      official: ${{ github.ref == 'refs/heads/main' }}
+      target: 'windows'

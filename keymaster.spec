@@ -74,5 +74,3 @@ systemctl daemon-reload
 %config(noreplace) %{_datarootdir}/keymasterd/customization_data/web_resources/*
 %config(noreplace) %{_datarootdir}/keymasterd/customization_data/templates/*
 %changelog
-
-
