@@ -12,26 +12,10 @@ concurrency:
 
 name: Test
 jobs:
-#  test:
-#    strategy:
-#      matrix:
-#        go-version: [1.22.x]
-#        os: [ubuntu-latest, macos-latest]
-#    runs-on: [self-hosted, ${{ matrix.os }}]
-#    steps:
-#    - uses: actions/setup-go@v5
-#      with:
-#        go-version: ${{ matrix.go-version }}
-#    - uses: actions/checkout@v4
-#    - run: make test
-
   test:
     runs-on: [self-hosted, pure1build]
     container:
       image: artifactory.pstg-inf.net:443/pstg-docker-official/pure1/pure1build-images/go-1-21:0.1.0
-      volumes:
-        - /root/.purelogin/spinnaker:/root/.purelogin/spinnaker
-        - /root/.purelogin/env-sandbox:/root/.purelogin/env-sandbox
     steps:
     - uses: actions/setup-go@v5
       with:

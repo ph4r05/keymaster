@@ -16,9 +16,6 @@ jobs:
     runs-on: [self-hosted, pure1build]
     container:
       image: artifactory.pstg-inf.net:443/dockerhub-registry-1/golang:1.21-bullseye
-      volumes:
-        - /root/.purelogin/spinnaker:/root/.purelogin/spinnaker
-        - /root/.purelogin/env-sandbox:/root/.purelogin/env-sandbox
     permissions:
       contents: read
       actions: read
