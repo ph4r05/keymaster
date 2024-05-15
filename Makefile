@@ -10,9 +10,10 @@ endif
 BINARY=keymaster
 
 # These are the values we want to pass for Version and BuildTime
-VERSION=1.15.3
+VERSION=$(shell awk '/^Version:/{print $$2}' keymaster.spec | sed 's/-/_/')
 DEFAULT_HOST?=
-DEFAULT_LDFLAGS=-X main.Version=${VERSION}
+EXTRA_LDFLAGS?=
+DEFAULT_LDFLAGS=-X main.Version=${VERSION} ${EXTRA_LDFLAGS}
 CLIENT_LDFLAGS=${DEFAULT_LDFLAGS} -X main.defaultHost=${DEFAULT_HOST}
 #BUILD_TIME=`date +%FT%T%z`
 
