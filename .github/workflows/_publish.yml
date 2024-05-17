@@ -79,7 +79,7 @@ jobs:
             if (versionMatch && versionMatch[1]) {
               version = versionMatch[1].replace('-', '_');
               artifactoryFolder = version + (isMainBranch ? '' : '-SNAPSHOT') 
-              artifactoryBaseName = version + (isMainBranch ? '' : ('-' + context.runId));
+              artifactoryBaseName = version + (isMainBranch ? '' : ('-SNAPSHOT'));  // artifactory automatically adds date and identifier, no need to add context.runId
               console.log('Version:', version, 'Artifactory folder:', artifactoryFolder, 'Artifactory base name:', artifactoryBaseName);
             } else {
               throw new Error('Version not found or parsing failed');
