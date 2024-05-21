@@ -356,7 +356,8 @@ Install all following dependencies
 - https://github.com/git-for-windows/build-extra/releases/tag/git-sdk-1.0.8
   - Do not enable experimental Git features, it breaks GHA Runner checkout 
 - https://nsis.sourceforge.io/Download (Windows installer builder)
-  - https://nsis.sourceforge.io/mediawiki/images/7/7f/EnVar_plugin.zip, extract to NSIS 
+  - https://github.com/GsNSIS/EnVar/releases/tag/v0.3.1, extract to NSIS
+  - Another source (possibly older) https://nsis.sourceforge.io/mediawiki/images/7/7f/EnVar_plugin.zip 
 - https://slproweb.com/products/Win32OpenSSL.html
 - https://www.python.org/ftp/python/3.12.3/python-3.12.3-amd64.exe, Install to `/c/Python312/python`
 - Make sure that system path contains:
