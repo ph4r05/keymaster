@@ -68,7 +68,8 @@ var (
 		"If true, use the smart round-robin dialer")
 	webauthBrowser = flag.String("webauthBrowser", "",
 		"Browser command to use for webauth")
-
+	printVersion = flag.Bool("version", false,
+		"Print version and exit")
 	FilePrefix = "keymaster"
 )
 
@@ -496,6 +497,11 @@ func main() {
 	flag.Usage = Usage
 	flag.Parse()
 	logger := cmdlogger.New()
+	computeUserAgent()
+	if *printVersion {
+		fmt.Println(userAgentString)
+		return
+	}
 	rootCAs, err := maybeGetRootCas(*rootCAFilename, logger)
 	if err != nil {
 		logger.Fatal(err)
@@ -511,7 +517,6 @@ func main() {
 		}
 		return
 	}
-	computeUserAgent()
 	userName, homeDir, err := util.GetUserNameAndHomeDir()
 	if err != nil {
 		logger.Fatal(err)
