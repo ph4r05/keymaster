@@ -21,6 +21,7 @@ jobs:
       actions: read
     env:
       DEFAULT_HOST: "keymaster.sec.cloud-support.purestorage.com"
+      VERSION_FLAVOUR: "pure"
       EXTRA_BUILD_FLAGS: "-buildvcs=false "
     steps:
 

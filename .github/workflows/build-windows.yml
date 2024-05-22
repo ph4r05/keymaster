@@ -19,6 +19,7 @@ jobs:
       actions: read
     env:
       DEFAULT_HOST: "keymaster.sec.cloud-support.purestorage.com"
+      VERSION_FLAVOUR: "pure"
     steps:
     - uses: actions/setup-go@v5
       if: false  # preinstalled go is used atm.

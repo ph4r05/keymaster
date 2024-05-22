@@ -12,9 +12,10 @@ BINARY=keymaster
 # These are the values we want to pass for Version and BuildTime
 VERSION=$(shell awk '/^Version:/{print $$2}' keymaster.spec | sed 's/-/_/')
 DEFAULT_HOST?=
+VERSION_FLAVOUR?=cf
 EXTRA_LDFLAGS?=
 DEFAULT_LDFLAGS=-X main.Version=${VERSION} ${EXTRA_LDFLAGS}
-CLIENT_LDFLAGS=${DEFAULT_LDFLAGS} -X main.defaultHost=${DEFAULT_HOST}
+CLIENT_LDFLAGS=${DEFAULT_LDFLAGS} -X main.defaultHost=${DEFAULT_HOST} -X main.versionFlavour=${VERSION_FLAVOUR}
 #BUILD_TIME=`date +%FT%T%z`
 
 # keymaster client requires special tags on linux

@@ -21,6 +21,7 @@ jobs:
       version: ${{ steps.getversion.outputs.version }}
     env:
       DEFAULT_HOST: "keymaster.sec.cloud-support.purestorage.com"
+      VERSION_FLAVOUR: "pure"
       CI_PROD: ${{ github.ref == 'refs/heads/main' }}
     steps:
     - uses: actions/setup-go@v5

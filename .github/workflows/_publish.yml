@@ -25,6 +25,7 @@ jobs:
 
     env:
       CI_PROD: ${{ inputs.official }}
+      VERSION_FLAVOUR: "pure"
       ARTIFACTORY_BASE_URL: "https://artifactory.pstg-inf.net/artifactory"
       ARTIFACTORY_URL: "https://artifactory.pstg-inf.net/artifactory/${{ inputs.official && 'pstg-maven-official' || 'pstg-maven-sandbox' }}/com/purestorage/keymaster"
 
