@@ -501,7 +501,7 @@ func main() {
 	flag.Parse()
 	logger := cmdlogger.New()
 	if *printVersion {
-		fmt.Println(userAgentString)
+		fmt.Println(Version)
 		return
 	}
 	rootCAs, err := maybeGetRootCas(*rootCAFilename, logger)

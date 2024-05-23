@@ -275,3 +275,13 @@ func TestInsertSSHCertIntoAgentORWriteToFilesystem(t *testing.T) {
 	// TODO: on linux/macos create agent + unix socket and pass that
 
 }
+
+func TestMainPrintVersion(t *testing.T) {
+	os.Args = []string{"cmd", "-version"}
+	done := make(chan struct{})
+	go func() {
+		main()
+		close(done)
+	}()
+	<-done
+}

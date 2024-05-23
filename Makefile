@@ -10,12 +10,16 @@ endif
 BINARY=keymaster
 
 # These are the values we want to pass for Version and BuildTime
-VERSION=$(shell awk '/^Version:/{print $$2}' keymaster.spec | sed 's/-/_/')
+VERSION?=1.15.8
 DEFAULT_HOST?=
-VERSION_FLAVOUR?=cf
+VERSION_FLAVOUR?=
 EXTRA_LDFLAGS?=
-DEFAULT_LDFLAGS=-X main.Version=${VERSION} ${EXTRA_LDFLAGS}
-CLIENT_LDFLAGS=${DEFAULT_LDFLAGS} -X main.defaultHost=${DEFAULT_HOST} -X main.versionFlavour=${VERSION_FLAVOUR}
+PRINTVERSION=${VERSION}
+ifneq ($(VERSION_FLAVOUR),)
+PRINTVERSION=${VERSION}-${VERSION_FLAVOUR}
+endif
+DEFAULT_LDFLAGS=-X main.Version=${PRINTVERSION} ${EXTRA_LDFLAGS}
+CLIENT_LDFLAGS=${DEFAULT_LDFLAGS} -X main.defaultHost=${DEFAULT_HOST}
 #BUILD_TIME=`date +%FT%T%z`
 
 # keymaster client requires special tags on linux
@@ -41,16 +45,25 @@ all:	install-client
 	cd cmd/keymaster-unlocker; go install -ldflags "${DEFAULT_LDFLAGS}"
 	cd cmd/keymaster-eventmond;  go install -ldflags "${DEFAULT_LDFLAGS}"
 
-build:	cmd/keymasterd/binData.go
+build:	prebuild
 	go build ${EXTRA_BUILD_FLAGS} -ldflags "${CLIENT_LDFLAGS}" -o $(OUTPUT_DIR) ./...
 
 cmd/keymasterd/binData.go:
 	-go-bindata -fs -o cmd/keymasterd/binData.go -prefix cmd/keymasterd/data cmd/keymasterd/data/...
 
-install-client:	cmd/keymasterd/binData.go
+keymaster.spec:
+    ifeq ($(OS), Windows_NT)
+		powershell -Command "Get-Content keymaster.spec.tpl | ForEach-Object { \$$_.Replace('{{VERSION}}', '$(VERSION)') } | Set-Content keymaster.spec"
+    else
+		sed 's/{{VERSION}}/$(VERSION)/g' keymaster.spec.tpl > keymaster.spec;
+    endif
+
+prebuild: keymaster.spec cmd/keymasterd/binData.go
+
+install-client:	prebuild
 	cd cmd/keymaster; go install ${EXTRA_BUILD_FLAGS} -ldflags "${CLIENT_LDFLAGS}"
 
-build-client:	cmd/keymasterd/binData.go
+build-client:	prebuild
 	go build -ldflags "${CLIENT_LDFLAGS}" -o $(OUTPUT_DIR) $(CLIENT_DEST)
 
 win-client: client-test
@@ -66,7 +79,7 @@ clean:
 	rm -f bin/*
 	rm -f keymaster-*.tar.gz
 
-${BINARY}-${VERSION}.tar.gz:
+${BINARY}-${VERSION}.tar.gz:	prebuild
 	mkdir ${BINARY}-${VERSION}
 	rsync -av --exclude="config.yml" --exclude="*.pem" --exclude="*.out" lib/ ${BINARY}-${VERSION}/lib/
 	rsync -av --exclude="config.yml" --exclude="*.pem" --exclude="*.out" --exclude="*.key" cmd/ ${BINARY}-${VERSION}/cmd/

@@ -52,66 +52,13 @@ jobs:
           zip -r ../keymaster-${{ inputs.target }}.zip .
           ls -lasR . || true
 
-      - name: Prepare for artifactory
+      - name: Publish to artifactory
         id: prepare
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const platform = "${{ inputs.target }}";
             const isMainBranch = ${{ inputs.official }};
-            console.log('Owner:', context.repo.owner);
-            console.log('Repo:', context.repo.repo);
-            console.log('Ref:', context.ref);
-
-            const fs = require('fs');
-            const path = require('path');
-
-            // Reading the 'keymaster.spec' file from the repository
-            const keymasterSpecPath = path.join(process.env.GITHUB_WORKSPACE, 'keymaster.spec');
-            const keymasterSpecContent = fs.readFileSync(keymasterSpecPath, 'utf8');
-
-            // Parse the version
-            const versionRegex = /^Version:\s*(\S+)/m;
-            const versionMatch = keymasterSpecContent.match(versionRegex);
-            let version = '';
-            let artifactoryFolder = '';
-            let artifactoryBaseName = '';
-
-            if (versionMatch && versionMatch[1]) {
-              version = versionMatch[1].replace('-', '_');
-              artifactoryFolder = version + (isMainBranch ? '' : '-SNAPSHOT') 
-              artifactoryBaseName = version + (isMainBranch ? '' : ('-SNAPSHOT'));  // artifactory automatically adds date and identifier, no need to add context.runId
-              console.log('Version:', version, 'Artifactory folder:', artifactoryFolder, 'Artifactory base name:', artifactoryBaseName);
-            } else {
-              throw new Error('Version not found or parsing failed');
-            }
-
-            // Generate POM
-            const pomName = `keymaster-${artifactoryBaseName}.pom`
-            const pomPath = path.join(process.env.GITHUB_WORKSPACE, pomName);
-            const file = fs.createWriteStream(pomPath);
-
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n');
-            file.write('<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"\n');
-            file.write('    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n');
-            file.write('  <modelVersion>4.0.0</modelVersion>\n');
-            file.write('  <groupId>com.purestorage</groupId>\n');
-            file.write('  <artifactId>keymaster</artifactId>\n');
-            file.write(`  <version>${artifactoryBaseName}</version>\n`);
-            file.write('  <packaging>pom</packaging>\n');
-            file.write('</project>\n');
-            file.end(); // Close the stream
-
-            core.setOutput('version', version);
-            core.setOutput('artifactoryFolder', artifactoryFolder);
-            core.setOutput('artifactoryBaseName', artifactoryBaseName);
-            core.setOutput('pomName', pomName);
-
-      - name: Display structure
-        run: |
-          ls -lasR artifacts/ || true
-
-      - name: Artifactory
-        run: |
-          curl -X PUT -u "${ORG_GRADLE_PROJECT_artifactoryUsername}:${ORG_GRADLE_PROJECT_artifactoryPassword}" -T "artifacts/keymaster-${{ inputs.target }}.zip" "${ARTIFACTORY_URL}/${{ steps.prepare.outputs.artifactoryFolder }}/keymaster-${{ steps.prepare.outputs.artifactoryBaseName }}-${{ inputs.target }}.zip" 
-          curl -X PUT -u "${ORG_GRADLE_PROJECT_artifactoryUsername}:${ORG_GRADLE_PROJECT_artifactoryPassword}" -T "${{ steps.prepare.outputs.pomName }}" "${ARTIFACTORY_URL}/${{ steps.prepare.outputs.artifactoryFolder }}/${{ steps.prepare.outputs.pomName }}" || true
+            
+            const script = require(process.env.GITHUB_WORKSPACE + '/.github/workflows/_publish.js');
+            await script({platform, isMainBranch, github, context, core, fetch})
