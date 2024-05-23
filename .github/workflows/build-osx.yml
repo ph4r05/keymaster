@@ -33,7 +33,13 @@ jobs:
     - name: Disable git safe directory warnings
       run: git config --global --add safe.directory '*'
 
-    - run: env GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 make client-test build-client
+    - run: |
+        env GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 make client-test build-client
+        cp bin/keymaster bin/keymaster-arm64
+        env GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 make client-test build-client
+        cp bin/keymaster bin/keymaster-amd64
+        lipo -create -output bin/keymaster bin/keymaster-arm64 bin/keymaster-amd64
+        lipo -info bin/keymaster
 
     - name: Extract version number
       id: getversion

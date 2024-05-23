@@ -4,13 +4,39 @@
 - As corporate GH account do not support any interaction with repositories outside of the organization, it is not possible to fork the repository directly. 
   - It has to be manually cloned and pushed to the corporate account (one-time operation). Thanks to this we don't have native fork repo functionality, e.g., commit differences status
   - It is needed to watch for changes manually
-- Primary build branch is `pure` with custom modifications (e.g., GHA workflows) to the master branch
-- Pull request to the upstream should be opened whenever possible, share changes with the upstream. Maintainers are friendly and open to this collaboration. 
+- Primary build branch is `main` with custom modifications (e.g., GHA workflows). Upstream master should be periodically reviewed and merged to main.
+- Pull request to the upstream should be opened whenever possible, share changes with the upstream. Maintainers are friendly and open to this collaboration. Personal GH account has to be used for that. 
 
 ## Upstream Contributing
 - You need to create a separate personal GH account. GH supports account switcher, it makes this split-world operation easier
 - Create PRs from the personal account to the upstream repository
 - Once merged, sync master branches in our fork manually and rebase pure branch on top of it
+
+One way to combine corporate and personal GH accounts is to use SSH with keys registered to both:
+
+`~/.ssh/config`:
+```
+Host github.com
+HostName github.com
+User git
+IdentityFile ~/.ssh/id_rsa
+
+Host github-personal
+HostName github.com
+User git
+IdentitiesOnly yes
+IdentityFile ~/.ssh/id_rsa_github_personal
+```
+
+Remotes
+```
+origin	https://github.com/pure-product-security/keymaster.git (fetch)
+origin	https://github.com/pure-product-security/keymaster.git (push)
+ph4ssh	git@github-personal:myuser/keymaster.git (fetch)
+ph4ssh	git@github-personal:myuser/keymaster.git (push)
+cf      git@github-personal:Cloud-Foundations/keymaster.git (fetch)
+cf      git@github-personal:Cloud-Foundations/keymaster.git (push)
+```
 
 ## Building
 

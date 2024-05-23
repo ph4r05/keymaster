@@ -31,14 +31,19 @@ jobs:
     - name: Disable git safe directory warnings
       run: git config --global --add safe.directory '*'
 
-    - run: |
-        & 'C:\git-sdk-64\msys2_shell.cmd' -mingw64 -no-start -here -defterm -c 'make client-test build-client'
+    - name: Build keymaster amd64
+      run: |
+        & 'C:\git-sdk-64\msys2_shell.cmd' -mingw64 -no-start -here -defterm -c 'make client-test build-client;'
       shell: powershell
+      env:
+        GOOS: windows
+        GOARCH: amd64
 
     - uses: actions/upload-artifact@v4
       with:
         name: keymaster-windows
-        path: bin/keymaster.exe
+        path: |
+          bin/keymaster.exe
 
   publish:
     needs:
