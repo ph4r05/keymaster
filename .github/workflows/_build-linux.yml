@@ -8,7 +8,7 @@ on:
         type: boolean
 
 jobs:
-  build:
+  build-linux:
     runs-on: [self-hosted, pure1build]
     container:
       image: artifactory.pstg-inf.net:443/dockerhub-registry-1/golang:1.21-bullseye

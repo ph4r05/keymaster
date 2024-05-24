@@ -12,6 +12,7 @@ jobs:
     uses: ./.github/workflows/_build-osx.yml
     with:
       official: ${{ inputs.official }}
+      runs-on: ${{ vars.OSX_RUNS_ON }}
     secrets:
       APPLE_DEV_P12_BASE64: ${{ secrets.APPLE_DEV_P12_BASE64 }}
       APPLE_INS_P12_BASE64: ${{ secrets.APPLE_INS_P12_BASE64 }}

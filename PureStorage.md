@@ -136,6 +136,7 @@ APPLE_INS_IDENTITY: Developer ID Installer: Pure Storage Inc. (4PQYP85VSU)
 APPLE_ID_INTERMEDIATE_CERT_URL: https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
 APPLE_TEAM_ID: 4PQYP85VSU
 APPLE_ID: yourappleid@purestorage.com
+OSX_RUNS_ON: p1sp
 ```
 
 #### Secrets

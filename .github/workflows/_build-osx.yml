@@ -6,6 +6,10 @@ on:
       official:
         required: true
         type: boolean
+      runs-on:
+        description: 'Extra runner tags'
+        type: string
+        required: false
     secrets:
       APPLE_DEV_P12_BASE64:
         required: true
@@ -19,8 +23,8 @@ on:
         required: true
 
 jobs:
-  build:
-    runs-on: [self-hosted, macOS, p1sp]
+  build-osx:
+    runs-on: ${{ fromJson(format('["self-hosted","macOS", {0}]', inputs.runs-on)) }}
     permissions:
       contents: read
       actions: read
@@ -80,10 +84,10 @@ jobs:
         name: keymaster.pkg
         path: keymaster.pkg
 
-  sign:
+  sign-osx:
     runs-on: [ self-hosted, macOS, p1sp ]
     needs:
-      - build
+      - build-osx
     environment: production
     if: inputs.official  # Only sign on the main branch
     permissions:
@@ -147,7 +151,7 @@ jobs:
           pkgbuild \
             --root package \
             --identifier "${{ vars.APPLE_BUNDLE_ID }}" \
-            --version "${{ needs.build.outputs.version }}" \
+            --version "${{ needs.build-osx.outputs.version }}" \
             --install-location /usr/local/bin \
             keymaster-unsigned.pkg
 
