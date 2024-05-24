@@ -1,0 +1,40 @@
+name: Build All Architectures
+
+on:
+  workflow_call:
+    inputs:
+      official:
+        required: true
+        type: boolean
+
+jobs:
+  build-osx:
+    uses: ./.github/workflows/_build-osx.yml
+    with:
+      official: ${{ inputs.official }}
+    secrets:
+      APPLE_DEV_P12_BASE64: ${{ secrets.APPLE_DEV_P12_BASE64 }}
+      APPLE_INS_P12_BASE64: ${{ secrets.APPLE_INS_P12_BASE64 }}
+      APPLE_DEV_PASSWORD: ${{ secrets.APPLE_DEV_PASSWORD }}
+      APPLE_INS_PASSWORD: ${{ secrets.APPLE_INS_PASSWORD }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+
+  build-linux:
+    uses: ./.github/workflows/_build-linux.yml
+    with:
+      official: ${{ inputs.official }}
+
+  build-windows:
+    uses: ./.github/workflows/_build-windows.yml
+    with:
+      official: ${{ inputs.official }}
+
+  publish:
+    needs:
+      - build-osx
+      - build-linux
+      - build-windows
+    uses: ./.github/workflows/_publish.yml
+    with:
+      official: ${{ inputs.official }}
+    secrets: inherit

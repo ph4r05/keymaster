@@ -1,4 +1,4 @@
-module.exports = async ({ platform, isMainBranch, github, context, core, fetch  }) => {
+module.exports = async ({ isMainBranch, github, context, core, fetch  }) => {
     console.log('Owner:', context.repo.owner);
     console.log('Repo:', context.repo.repo);
     console.log('Ref:', context.ref);
@@ -81,8 +81,9 @@ module.exports = async ({ platform, isMainBranch, github, context, core, fetch  
         return fs.readdirSync(directory).filter(file => pattern.test(file));
     }
 
-    // Upload main zip
-    await artifactoryUpload(`artifacts/keymaster-${platform}.zip`, `keymaster-${artifactoryBaseName}-${platform}.zip`);
+    await artifactoryUpload(`artifacts/keymaster-osx.zip`, `keymaster-${artifactoryBaseName}-osx.zip`);
+    await artifactoryUpload(`artifacts/keymaster-linux.zip`, `keymaster-${artifactoryBaseName}-linux.zip`);
+    await artifactoryUpload(`artifacts/keymaster-windows.zip`, `keymaster-${artifactoryBaseName}-windows.zip`);
 
     // POM can fail as it can be already uploaded and also is not essential for keymaster operation as it is not a java package
     await artifactoryUpload(pomName, pomName, true);

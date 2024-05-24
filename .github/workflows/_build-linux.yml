@@ -1,16 +1,12 @@
-on:
-  pull_request:
-  push:
-    branches: [ main, master, 'main-*', 'master-*', rc, 'rc-*' ]
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+.*"
-  merge_group:
-
-concurrency:
-  group: ${{ github.repository }}-${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
-
 name: Build Linux
+
+on:
+  workflow_call:
+    inputs:
+      official:
+        required: true
+        type: boolean
+
 jobs:
   build:
     runs-on: [self-hosted, pure1build]
@@ -22,10 +18,14 @@ jobs:
     env:
       DEFAULT_HOST: "keymaster.sec.cloud-support.purestorage.com"
       VERSION_FLAVOUR: "pure"
-      EXTRA_BUILD_FLAGS: "-buildvcs=false "
     steps:
 
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Disable git safe directory warnings
+      run: git config --global --add safe.directory '*'
 
     - run: |
         dpkg --add-architecture arm64
@@ -49,11 +49,3 @@ jobs:
           bin/keymaster
           bin/keymaster-arm64
           bin/keymaster-amd64
-
-  publish:
-    needs:
-      - build
-    uses: ./.github/workflows/_publish.yml
-    with:
-      official: ${{ github.ref == 'refs/heads/main' }}
-      target: 'linux'

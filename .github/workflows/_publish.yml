@@ -6,9 +6,6 @@ on:
       official:
         required: true
         type: boolean
-      target:
-        required: true
-        type: string
 
 jobs:
   publish:
@@ -48,17 +45,16 @@ jobs:
       - name: Postprocess artifact
         run: |
           ls -lasR artifacts/ || true
-          cd artifacts/keymaster-${{ inputs.target }}
-          zip -r ../keymaster-${{ inputs.target }}.zip .
-          ls -lasR . || true
+          (cd artifacts/keymaster-osx && zip -r ../keymaster-osx.zip . )
+          (cd artifacts/keymaster-linux && zip -r ../keymaster-linux.zip . )
+          (cd artifacts/keymaster-windows && zip -r ../keymaster-windows.zip . )
+          ls -lasR artifacts/ || true
 
       - name: Publish to artifactory
         id: prepare
         uses: actions/github-script@v7
         with:
           script: |
-            const platform = "${{ inputs.target }}";
             const isMainBranch = ${{ inputs.official }};
-            
             const script = require(process.env.GITHUB_WORKSPACE + '/.github/workflows/_publish.js');
-            await script({platform, isMainBranch, github, context, core, fetch})
+            await script({isMainBranch, github, context, core, fetch})

@@ -1,0 +1,12 @@
+name: Release to Official and Deploy
+on:
+  push:
+    branches: [ main ]
+concurrency:
+  group: ${{ github.repository }}-${{ github.ref }}-${{ github.workflow }}
+jobs:
+  build:
+    uses: ./.github/workflows/_build-all.yml
+    with:
+      official: ${{ github.ref == 'refs/heads/main' }}
+    secrets: inherit

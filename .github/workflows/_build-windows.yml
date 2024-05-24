@@ -1,16 +1,12 @@
-on:
-  pull_request:
-  push:
-    branches: [ main, master, 'main-*', 'master-*', rc, 'rc-*' ]
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+.*"
-  merge_group:
-
-concurrency:
-  group: ${{ github.repository }}-${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
-
 name: Build Windows
+
+on:
+  workflow_call:
+    inputs:
+      official:
+        required: true
+        type: boolean
+
 jobs:
   build:
     runs-on: [self-hosted, Windows]
@@ -27,6 +23,8 @@ jobs:
         go-version: "1.22.x"
 
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Disable git safe directory warnings
       run: git config --global --add safe.directory '*'
@@ -44,11 +42,3 @@ jobs:
         name: keymaster-windows
         path: |
           bin/keymaster.exe
-
-  publish:
-    needs:
-      - build
-    uses: ./.github/workflows/_publish.yml
-    with:
-      official: ${{ github.ref == 'refs/heads/main' }}
-      target: 'windows'
