@@ -49,14 +49,30 @@ Keymaster is built with the following environment variable so the Keymaster serv
 This enables to run Keymaster without configuration file.
 
 ```
-DEFAULT_HOST="keymaster.sec.cloud-support.purestorage.com" make install-client
+VERSION_FLAVOUR=pure DEFAULT_HOST="keymaster.sec.cloud-support.purestorage.com" make install-client
 ```
+
+- `VERSION_FLAVOUR` is appended to the version to distinguish upstream builds from pure builds\
+- `DEFAULT_HOST` is the default Keymaster server address
 
 # GHA Setup
 GHA is used to build keymaster client for all used architectures: 
 - Linux, runs on pure1build runners, default
 - Windows, runs on a self-hosted runner
 - OSX, runs on a shared self-hosted runner
+
+## Testing
+
+Yubikey support needs to be tested on all architectures. 
+- OSX: typically easy as developers use it
+- Linux
+  - Install VMWare Fusion via Self Service, Run Ubuntu ISO, connect Yubikey USB to the VM, run `keymaster -checkDevices` and potentially try to login with Yubikey enabled. 
+  - If OSX is running on ARM, also Ubuntu image has to be ARM.
+  - No installation is needed, live boot works fine
+- Windows
+  - Use VMWare Fusion, pick download from Microsoft, quickly install it (if done otherwise, network drivers are not available, installation won't progress)
+  - run `keymaster -checkDevices`
+  - ARM build for Keymaster is not yet working, however, ARM Windows can run x86 binaries 
 
 ---------------
 

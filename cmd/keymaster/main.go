@@ -41,14 +41,12 @@ const (
 const userAgentAppName = "keymaster"
 const defaultVersionNumber = "No version provided"
 const defaultConfigHost = ""
-const defaultFlavour = "cf"
 
 var (
 	// Must be a global variable in the data segment so that the build
 	// process can inject the version number on the fly when building the
 	// binary. Use only from the Usage() function.
 	Version         = defaultVersionNumber
-	versionFlavour  = defaultFlavour
 	defaultHost     = defaultConfigHost
 	userAgentString = userAgentAppName
 )
@@ -465,7 +463,7 @@ func computeUserAgent() {
 		uaVersion = "0.0"
 	}
 
-	userAgentString = fmt.Sprintf("%s/%s-%s (%s %s)", userAgentAppName, uaVersion, versionFlavour, runtime.GOOS, runtime.GOARCH)
+	userAgentString = fmt.Sprintf("%s/%s (%s %s)", userAgentAppName, uaVersion, runtime.GOOS, runtime.GOARCH)
 }
 
 func getHttpClient(rootCAs *x509.CertPool, logger log.DebugLogger) (*http.Client, error) {
