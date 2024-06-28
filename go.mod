@@ -7,7 +7,7 @@ toolchain go1.22.4
 replace github.com/bearsh/hid v1.3.0 => github.com/bearsh/hid v1.5.0
 
 require (
-	github.com/Cloud-Foundations/Dominator v0.3.3
+	github.com/Cloud-Foundations/Dominator v0.3.4
 	github.com/Cloud-Foundations/golib v0.5.0
 	github.com/Cloud-Foundations/npipe v0.0.0-20191222161149-761e85df1f92
 	github.com/Cloud-Foundations/tricorder v0.0.0-20191102180116-cf6bbf6d0168
